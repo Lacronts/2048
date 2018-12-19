@@ -1,0 +1,13 @@
+.square {
+  position: absolute;
+  width: 99px;
+  height: 99px;
+  border: 1px solid white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.square .value {
+  font-size: 40px;
+}
