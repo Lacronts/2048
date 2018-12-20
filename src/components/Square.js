@@ -2,31 +2,40 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Square.css';
 
-const Square = (props) => {
-  const color = getColor(props.value)
+const Square = ({ col, row, coords, value }) => {
+  const color = getColor(value);
+  const fontColor = getFontColor(value);
     return (
-      <div className='square' style={{
-            marginLeft: props.col*100,
-            marginTop:props.row*100,
+      <div className={`square ${row === +coords[0] && col === +coords[1] ? 'new': ''}`} style={{
+            marginLeft: col*100,
+            marginTop: row*100,
             backgroundColor: color,
+            color: fontColor,
           }}>
-        <span className='value'>{props.value}</span>
+        <span className='value'>{value}</span>
       </div>
     )
   }
 
 Square.propTypes = {
-  value: PropTypes.number.isRequired,
   col: PropTypes.number.isRequired,
   row: PropTypes.number.isRequired,
 };
 
 function getColor(value) {
-  const numbers = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
-  const colors = ['#009900', '#666633', '#cc6600', '#cc6699', '#9999ff', '#0099cc', '#800000', '#ffffcc',  '#0066ff', '#ffffff', '#33cc33','#000'];
+  const numbers = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384];
+  const colors = ['#eee', '#eec', '#fb8','#f96','#f75','#f53','#ec7','#ec6','#ec5','#ec3','#ec2','#000','#000','#000','#000','#000'];
   const index = numbers.indexOf(value);
 
   return colors[index];
+}
+
+function getFontColor(value){
+  const numbers = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384];
+  const fontColors = ['#222', '#222', '#eee','#eee','#eee','#eee','#222','#222','#222','#222','#eee','#eee','#eee','#eee',];
+  const index = numbers.indexOf(value);
+
+  return fontColors[index];
 }
 
 export default Square;

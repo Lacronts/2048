@@ -2,12 +2,29 @@
   position: absolute;
   width: 99px;
   height: 99px;
-  border: 1px solid white;
+  border: 3px solid rgb(160,160,160);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
+.square.new {
+  animation-duration: 0.1s;
+  animation-name: newSquare;
+  animation-fill-mode: forwards;
+  animation-delay: 0.15s;
+  transform: scale(0);
+}
 .square .value {
   font-size: 40px;
+}
+
+@keyframes newSquare {
+  from {
+    transform: scale(0);
+  }
+
+  to {
+    transform: scale(1);
+  }
 }

@@ -1,15 +1,23 @@
 import React, { Component } from 'react';
 import Square from './Square';
 import './Board.css';
+import {
+  Header,
+  Button,
+} from 'semantic-ui-react';
 
 class Board extends Component {
   constructor(props){
     super(props);
     this.state = {
       squares: [],
+      prevSquares: [],
       win: false,
       lose: false,
       continued: false,
+      score: 0,
+      maxScore: 0,
+      newCoords: [],
     };
     this.divRef = React.createRef();
   }
@@ -17,20 +25,38 @@ class Board extends Component {
   componentDidMount(){
     this.divRef.current.focus();
     this.getInitialState();
+    this.getMaxScore();
   }
 
   componentDidUpdate(){
-    const { squares, lose, win } = this.state
+    const { squares, lose, win, score, maxScore } = this.state
     if (!win) {
       this.winner(squares);
     }
     if (!lose) {
       this.loser(squares);
     }
+    if (score > maxScore) {
+      localStorage.setItem('maxScore', score);
+      this.setState({
+        maxScore: score,
+      })
+    }
+  }
+
+  getMaxScore = () => {
+    const maxScore = localStorage.getItem('maxScore') || 0;
+
+    this.setState({
+      maxScore: maxScore,
+    })
   }
 
   handleKeyPress = (event) => {
     const { squares } = this.state;
+    this.setState((state) => ({
+      prevSquares: squares,
+    }));
     let newSquares = squares.slice();
 
     if (event.keyCode === 37) {
@@ -69,36 +95,45 @@ class Board extends Component {
 
     if (!this.compareArrays(squares, newSquares)) {
       this.setState((state) => ({
-        squares: newSquares
-      }), this.getRandomSquare(newSquares))
+          squares: newSquares
+        }), this.getRandomSquare);
     }
   }
 
   toLeft = (row) => {
+    let sum = 0;
     const values = row.filter(item => item !== null);
     if (values.length > 1) {
       for (let i = 0; i < values.length; i+=1) {
         if (values[i] === values[i+1]) {
           values[i] = values[i] * 2;
+          sum+=values[i];
           values.splice(i+1,1);
-          break;
         }
       }
     }
+    this.setState((state) => ({
+      score: state.score + sum,
+    }));
     return values;
   }
 
   toRight = (row) => {
+    let sum = 0;
     const values = row.filter(item => item !== null);
     if (values.length > 1) {
       for (let i = values.length-1; i >= 0; i-=1) {
         if (values[i] === values[i-1]) {
           values[i] = values[i] * 2;
+          sum+=values[i];
           values.splice(i-1,1);
-          break;
+          i-=1;
         }
       }
     }
+    this.setState((state) => ({
+      score: state.score + sum,
+    }));
     return values;
   }
 
@@ -131,16 +166,17 @@ class Board extends Component {
     return rotatedArray;
   }
 
-  getRandomSquare = (squares) => {
+  getRandomSquare = () => {
+    const { squares } = this.state;
     let newSquares = squares.slice();
-    const newValue = [2,4,2,2][Math.floor(Math.random() * 4)];
+    const newValue = [2,4,2,2,2][Math.floor(Math.random() * 5)];
     const randomSquare = this.getRandomCoords(squares);
     const coords = randomSquare.split('');
     newSquares[+coords[0]][+coords[1]] = newValue;
     this.setState({
-      squares: newSquares
+      squares: newSquares,
+      newCoords: coords,
     })
-
   }
 
   getRandomCoords = (array) => {
@@ -209,9 +245,11 @@ class Board extends Component {
 
     if (square1 === square2) {
       this.setState({
+        score: 0,
         win: false,
         lose: false,
         continued: false,
+        prevSquares: [],
         squares: [[null,null,null,null],[null,2,null,null],[null,null,null,2],[null,null,null,null]]
       });
       return;
@@ -225,14 +263,27 @@ class Board extends Component {
       win: false,
       lose: false,
       continued: false,
-      squares: initialArray
+      prevSquares: [],
+      squares: initialArray,
+      score: 0,
+    });
+    this.divRef.current.focus();
+  }
+
+  backToPrevState = () => {
+    const { prevSquares } = this.state;
+
+    this.setState({
+      squares: prevSquares,
+      prevSquares: [],
     });
     this.divRef.current.focus();
   }
 
   renderBoard = () => {
-    const { squares, win, lose, continued } = this.state;
+    const { squares, win, lose, continued, score, maxScore, prevSquares, newCoords } = this.state;
     return (
+      <React.Fragment>
       <div
         className='board'
         onKeyDown={this.handleKeyPress}
@@ -242,17 +293,16 @@ class Board extends Component {
         {
           squares.map((squareRow, row) => {
             return squareRow.map((square, col) => {
-              if (square) {
                 return (
                   <Square
                     key={col}
                     row={row}
                     col={col}
                     value={square}
-                    />
+                    coords={newCoords}
+                  />
                 );
-              }
-              return null;
+
             })
           })
         }
@@ -260,15 +310,18 @@ class Board extends Component {
           win && !continued && (
             <div className='modal'>
               <div className='modal_center'>
-                <h2 className='h'>Вы победили!</h2>
-                <button
-                  className='btn'
+                <Header as='h2' inverted>Вы победили!</Header>
+                <Button.Group>
+                <Button
+                  inverted
+                  color='orange'
                   onClick={() => this.getInitialState()}
                 >
                   С начала
-                </button>
-                <button
-                  className='btn'
+                </Button>
+                <Button
+                  inverted
+                  color='olive'
                   onClick={() => {
                       this.setState((state) => ({continued: true}));
                       this.divRef.current.focus();
@@ -276,7 +329,8 @@ class Board extends Component {
                   }
                 >
                   Продолжить
-                </button>
+                </Button>
+                </Button.Group>
               </div>
             </div>
           )
@@ -285,21 +339,34 @@ class Board extends Component {
           lose && (
             <div className='modal'>
               <div className='modal_center'>
-                <h2 className='h'>Вы проиграли!</h2>
-                <button
-                  className='btn'
+                <Header as='h2' inverted>Вы проиграли!</Header>
+                <Button
+                  inverted
+                  color='orange'
                   onClick={() => {
                       this.getInitialState();
                     }
                   }
                 >
                   С начала
-                </button>
+                </Button>
               </div>
             </div>
           )
         }
       </div>
+      <div style={{textAlign: 'center', marginTop: '10px'}}>
+        <Button
+          onClick={this.backToPrevState}
+          disabled={!prevSquares.length}
+        >
+          Шаг назад
+        </Button>
+        <Header color='orange' as='h2'>Your Score: {score}
+        <Header.Subheader>Max Score: {maxScore}</Header.Subheader>
+        </Header>
+      </div>
+    </React.Fragment>
     )
   }
 
