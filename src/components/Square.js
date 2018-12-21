@@ -2,7 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Square.css';
 
-const Square = ({ col, row, coords, value }) => {
+class Square extends React.Component {
+  componentWillUnmount(){
+    console.log('unmount')
+  }
+
+  render() {
+  const { col, row, coords, value } = this.props
   const color = getColor(value);
   const fontColor = getFontColor(value);
     return (
@@ -16,6 +22,7 @@ const Square = ({ col, row, coords, value }) => {
       </div>
     )
   }
+}
 
 Square.propTypes = {
   col: PropTypes.number.isRequired,

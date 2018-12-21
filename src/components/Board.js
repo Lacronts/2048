@@ -54,48 +54,28 @@ class Board extends Component {
 
   handleKeyPress = (event) => {
     const { squares } = this.state;
-    this.setState((state) => ({
-      prevSquares: squares,
-    }));
+
     let newSquares = squares.slice();
+    const direction = event.keyCode - 37;
+    const reverseDirection = direction === 0 ? 0 : 4 - direction;
 
-    if (event.keyCode === 37) {
-      for (let i = 0, max = squares.length; i < max; i+=1) {
-          const row = this.fillNullLeft(this.toLeft(squares[i]), max);
-          newSquares[i] = row;
-      }
+    for (let dir = 0; dir < direction; dir+=1){
+      newSquares = this.rotateArray(newSquares);
     }
 
-    if (event.keyCode === 39) {
-      for (let i = 0, max = squares.length; i < max; i+=1) {
-          const row = this.fillNullRight(this.toRight(squares[i]), max);
-          newSquares[i] = row;
-        }
+    for (let i = 0, max = newSquares.length; i < max; i+=1) {
+      const row = this.fillNullLeft(this.toLeft(newSquares[i]), max);
+      newSquares[i] = row;
     }
 
-    if (event.keyCode === 38) {
-      let rotatedSquares = this.rotateArray(squares);
-      for (let i = 0, max = rotatedSquares.length; i < max; i+=1) {
-        const row = this.fillNullLeft(this.toLeft(rotatedSquares[i]), max);
-        rotatedSquares[i] = row;
-      }
-      rotatedSquares = this.rotateArray(rotatedSquares);
-      newSquares = rotatedSquares;
-    }
-
-    if (event.keyCode === 40) {
-      let rotatedSquares = this.rotateArray(squares);
-      for (let i = 0, max = rotatedSquares.length; i < max; i+=1) {
-        const row = this.fillNullRight(this.toRight(rotatedSquares[i]), max);
-        rotatedSquares[i] = row;
-      }
-      rotatedSquares = this.rotateArray(rotatedSquares);
-      newSquares = rotatedSquares;
+    for (let dir = 0; dir < reverseDirection; dir+=1){
+      newSquares = this.rotateArray(newSquares);
     }
 
     if (!this.compareArrays(squares, newSquares)) {
       this.setState((state) => ({
-          squares: newSquares
+          squares: newSquares,
+          prevSquares: squares,
         }), this.getRandomSquare);
     }
   }
@@ -118,38 +98,10 @@ class Board extends Component {
     return values;
   }
 
-  toRight = (row) => {
-    let sum = 0;
-    const values = row.filter(item => item !== null);
-    if (values.length > 1) {
-      for (let i = values.length-1; i >= 0; i-=1) {
-        if (values[i] === values[i-1]) {
-          values[i] = values[i] * 2;
-          sum+=values[i];
-          values.splice(i-1,1);
-          i-=1;
-        }
-      }
-    }
-    this.setState((state) => ({
-      score: state.score + sum,
-    }));
-    return values;
-  }
-
   fillNullLeft = (array, length) => {
     for (let i = 0; i < length; i+=1) {
       if (!array[i]) {
         array.push(null);
-      }
-    }
-    return array;
-  }
-
-  fillNullRight = (array, length) => {
-    for (let i = 0; i < length; i+=1) {
-      if (!array[i]) {
-        array.unshift(null);
       }
     }
     return array;
@@ -160,7 +112,7 @@ class Board extends Component {
     for (let i = 0, max = array.length; i < max; i+=1) {
       rotatedArray[i] = [];
       for (let j = 0; j < max; j+=1) {
-        rotatedArray[i][j] = array[j][i];
+        rotatedArray[i][j] = array[j][max - i - 1];
       }
     }
     return rotatedArray;
@@ -276,6 +228,7 @@ class Board extends Component {
     this.setState({
       squares: prevSquares,
       prevSquares: [],
+      lose: false,
     });
     this.divRef.current.focus();
   }
@@ -295,7 +248,7 @@ class Board extends Component {
             return squareRow.map((square, col) => {
                 return (
                   <Square
-                    key={col}
+                    key={`${row}-${col}`}
                     row={row}
                     col={col}
                     value={square}
