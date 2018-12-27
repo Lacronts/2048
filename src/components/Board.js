@@ -4,6 +4,7 @@ import './Board.css';
 import {
   Header,
   Button,
+  Dropdown,
 } from 'semantic-ui-react';
 
 class Board extends Component {
@@ -18,6 +19,7 @@ class Board extends Component {
       score: 0,
       maxScore: 0,
       newCoords: [],
+      boardSize: 4,
     };
     this.divRef = React.createRef();
   }
@@ -183,8 +185,8 @@ class Board extends Component {
       })
   }
 
-  getInitialState = (res) => {
-    res = res || 4;
+  getInitialState = () => {
+    const res = this.state.boardSize;
     let initialArray = [];
     for (let i = 0; i < res; i+=1) {
       initialArray[i] = [];
@@ -195,17 +197,6 @@ class Board extends Component {
     let square1 = this.getRandomCoords(initialArray);
     let square2 = this.getRandomCoords(initialArray);
 
-    if (square1 === square2) {
-      this.setState({
-        score: 0,
-        win: false,
-        lose: false,
-        continued: false,
-        prevSquares: [],
-        squares: [[null,null,null,null],[null,2,null,null],[null,null,null,2],[null,null,null,null]]
-      });
-      return;
-    }
     const coordsOne = square1.split('');
     const coordsTwo = square2.split('');
     initialArray[+coordsOne[0]][+coordsOne[1]] = 2;
@@ -233,12 +224,34 @@ class Board extends Component {
     this.divRef.current.focus();
   }
 
+  changeSizeBoard = (event, {value}) => {
+    this.setState((state) => ({
+      boardSize: value,
+    }), this.getInitialState)
+  this.divRef.current.focus();
+  }
+
   renderBoard = () => {
-    const { squares, win, lose, continued, score, maxScore, prevSquares, newCoords } = this.state;
+    const { squares, win, lose, continued, score, maxScore, prevSquares, newCoords, boardSize } = this.state;
     return (
       <React.Fragment>
+      <div style={{textAlign: 'center'}}>
+        <strong>Size:</strong>
+        <Dropdown
+          selection
+          onChange={this.changeSizeBoard}
+          compact
+          options={[
+            {key: '4', value: 4, text: '4x4'},
+            {key: '5', value: 5, text: '5x5'},
+            {key: '6', value: 6, text: '6x6'}
+          ]}
+          placeholder='4x4'
+        />
+      </div>
       <div
         className='board'
+        style={{width: boardSize * 100, height: boardSize * 100}}
         onKeyDown={this.handleKeyPress}
         tabIndex="0"
         ref={this.divRef}
